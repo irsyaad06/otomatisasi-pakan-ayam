@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('status_alat', function (Blueprint $table) {
             $table->id();
+            $table->string('device_id')->unique();
             $table->string('nama_perangkat');
+            $table->decimal('berat_pakan', 8, 2)->default(0.00);
             $table->string('status_koneksi')->default('offline'); // 'online', 'offline'
             $table->string('status_motor')->default('mati'); // 'aktif', 'mati'
             $table->string('status_sensor')->default('normal'); // 'normal', 'rusak'

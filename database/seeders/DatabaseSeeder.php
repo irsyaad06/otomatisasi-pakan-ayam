@@ -185,8 +185,10 @@ class DatabaseSeeder extends Seeder
 
         // 6. Seed 1 Status Alat ESP32 Terbaru
         StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => 'FEEDER-01'],
             [
+                'nama_perangkat' => 'ESP32-FeederKandang',
+                'berat_pakan' => 20.00,
                 'status_koneksi' => 'online',
                 'status_motor' => 'mati',
                 'status_sensor' => 'normal',

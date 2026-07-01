@@ -23,6 +23,8 @@ class DashboardController extends Controller
 
     public function index(): JsonResponse
     {
+        StatusAlat::checkConnections();
+
         // 1. Stok pakan terbaru
         $stokPakanTerbaru = StokPakan::orderBy('waktu_pembacaan', 'desc')->first();
 
@@ -95,6 +97,8 @@ class DashboardController extends Controller
 
     public function ringkasan(): JsonResponse
     {
+        StatusAlat::checkConnections();
+
         $stokPakanTerbaru = StokPakan::orderBy('waktu_pembacaan', 'desc')->first();
         $statusAlat = StatusAlat::orderBy('updated_at', 'desc')->first();
 

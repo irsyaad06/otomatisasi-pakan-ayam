@@ -27,6 +27,8 @@ class SimulasiController extends Controller
      */
     public function status(): JsonResponse
     {
+        StatusAlat::checkConnections();
+
         // 1. Periode aktif
         $periode = PeriodePemeliharaan::where('status', 'aktif')
             ->orderBy('created_at', 'desc')
@@ -187,9 +189,14 @@ class SimulasiController extends Controller
         ]);
 
         // 7. Update status motor menjadi mati
+        $firstDevice = StatusAlat::first();
+        $deviceId = $firstDevice ? $firstDevice->device_id : 'FEEDER-01';
+        $namaPerangkat = $firstDevice ? $firstDevice->nama_perangkat : 'ESP32-FeederKandang';
+
         StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => $deviceId],
             [
+                'nama_perangkat' => $namaPerangkat,
                 'status_koneksi' => 'online',
                 'status_motor' => 'mati',
                 'status_sensor' => 'normal',
@@ -281,9 +288,14 @@ class SimulasiController extends Controller
         ]);
 
         // 4. Update status motor menjadi mati (auto-cut aktif)
+        $firstDevice = StatusAlat::first();
+        $deviceId = $firstDevice ? $firstDevice->device_id : 'FEEDER-01';
+        $namaPerangkat = $firstDevice ? $firstDevice->nama_perangkat : 'ESP32-FeederKandang';
+
         StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => $deviceId],
             [
+                'nama_perangkat' => $namaPerangkat,
                 'status_koneksi' => 'online',
                 'status_motor' => 'mati',
                 'status_sensor' => 'normal',

@@ -8,11 +8,13 @@ use App\Models\StokPakan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\StoreStatusAlatRequest;
 
 class StatusAlatController extends Controller
 {
     public function index(): JsonResponse
     {
+        StatusAlat::checkConnections();
         $status = StatusAlat::orderBy('updated_at', 'desc')->get();
 
         return response()->json([
@@ -24,6 +26,7 @@ class StatusAlatController extends Controller
 
     public function show($id): JsonResponse
     {
+        StatusAlat::checkConnections();
         $status = StatusAlat::find($id);
 
         if (!$status) {
@@ -56,37 +59,28 @@ class StatusAlatController extends Controller
         ]);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(StoreStatusAlatRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'nama_perangkat' => 'required|string|max:255',
-            'status_koneksi' => 'required|in:online,offline',
-            'status_motor' => 'required|in:aktif,mati',
-            'status_sensor' => 'required|in:normal,rusak',
-            'mode_operasi' => 'required|in:otomatis,manual',
-            'terakhir_online' => 'nullable|date'
-        ]);
+        $validated = $request->validated();
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $data = $request->all();
-        if (empty($data['terakhir_online'])) {
-            $data['terakhir_online'] = now();
-        }
-
-        $status = StatusAlat::create($data);
+        $status = StatusAlat::updateOrCreate(
+            ['device_id' => $validated['device_id']],
+            [
+                'nama_perangkat' => $validated['nama_perangkat'],
+                'berat_pakan' => $validated['berat_pakan'],
+                'status_motor' => $validated['status_motor'],
+                'status_sensor' => $validated['status_sensor'],
+                'mode_operasi' => $validated['mode_operasi'],
+                'status_koneksi' => 'online',
+                'terakhir_online' => now(),
+            ]
+        );
 
         return response()->json([
             'status' => true,
-            'message' => 'Berhasil menambahkan status alat baru',
+            'message' => 'Berhasil memperbarui status alat',
             'data' => $status
-        ], 210);
+        ], 200);
     }
 
     public function update(Request $request, $id): JsonResponse

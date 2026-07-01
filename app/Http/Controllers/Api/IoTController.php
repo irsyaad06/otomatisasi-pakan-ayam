@@ -41,9 +41,14 @@ class IoTController extends Controller
         ]);
 
         // 2. Update status_alat (cari yang ada atau buat baru)
+        $firstDevice = StatusAlat::first();
+        $deviceId = $firstDevice ? $firstDevice->device_id : 'FEEDER-01';
+        $namaPerangkat = $firstDevice ? $firstDevice->nama_perangkat : 'ESP32-FeederKandang';
+
         $statusAlat = StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => $deviceId],
             [
+                'nama_perangkat' => $namaPerangkat,
                 'status_koneksi' => $request->status_koneksi,
                 'status_motor' => $request->status_motor,
                 'status_sensor' => $request->status_sensor,
@@ -101,9 +106,14 @@ class IoTController extends Controller
         ]);
 
         // 4. Update status motor menjadi mati setelah simulasi
+        $firstDevice = StatusAlat::first();
+        $deviceId = $firstDevice ? $firstDevice->device_id : 'FEEDER-01';
+        $namaPerangkat = $firstDevice ? $firstDevice->nama_perangkat : 'ESP32-FeederKandang';
+
         $statusAlat = StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => $deviceId],
             [
+                'nama_perangkat' => $namaPerangkat,
                 'status_koneksi' => 'online',
                 'status_motor' => 'mati',
                 'status_sensor' => 'normal',
@@ -134,9 +144,14 @@ class IoTController extends Controller
         ]);
 
         // Update status alat agar sinkron
+        $firstDevice = StatusAlat::first();
+        $deviceId = $firstDevice ? $firstDevice->device_id : 'FEEDER-01';
+        $namaPerangkat = $firstDevice ? $firstDevice->nama_perangkat : 'ESP32-FeederKandang';
+
         StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => $deviceId],
             [
+                'nama_perangkat' => $namaPerangkat,
                 'status_koneksi' => 'online',
                 'terakhir_online' => now(),
             ]
@@ -185,9 +200,14 @@ class IoTController extends Controller
         ]);
 
         // 3. Update status alat
+        $firstDevice = StatusAlat::first();
+        $deviceId = $firstDevice ? $firstDevice->device_id : 'FEEDER-01';
+        $namaPerangkat = $firstDevice ? $firstDevice->nama_perangkat : 'ESP32-FeederKandang';
+
         $statusAlat = StatusAlat::updateOrCreate(
-            ['nama_perangkat' => 'ESP32-FeederKandang'],
+            ['device_id' => $deviceId],
             [
+                'nama_perangkat' => $namaPerangkat,
                 'status_koneksi' => 'online',
                 'status_motor' => 'mati', // sudah auto-cut
                 'status_sensor' => 'normal',

@@ -39,4 +39,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('periode-pemeliharaan');
 });
 
+Route::get('/ping', function () {
+    return response()->json([
+        'status' => 'ok'
+    ]);
+});
+
 require __DIR__.'/settings.php';
