@@ -499,7 +499,8 @@ const toggleMotorStatus = async (item: any) => {
   const newStatus = item.status_motor === 'aktif' ? 'mati' : 'aktif';
   try {
     await store.updateStatus(item.id, { 
-      status_motor: newStatus 
+      status_motor: newStatus,
+      mode_operasi: 'manual'
     });
     toast.success(`Motor berhasil diubah menjadi ${newStatus}!`);
   } catch (err) {

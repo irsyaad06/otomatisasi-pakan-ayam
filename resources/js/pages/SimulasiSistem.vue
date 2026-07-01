@@ -433,7 +433,8 @@ const togglePhysicalMotor = async () => {
     apiLoading.value = true;
     try {
         const response = await api.put(`/status-alat/${simStatus.value.status_alat.id}`, {
-            status_motor: newStatus
+            status_motor: newStatus,
+            mode_operasi: 'manual'
         });
         if (response.data?.status) {
             toast.success(`Motor berhasil diubah menjadi ${newStatus}!`);

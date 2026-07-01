@@ -63,14 +63,30 @@ class StatusAlatController extends Controller
     {
         $validated = $request->validated();
 
+        // Cari record status_alat yang sudah ada untuk device ini
+        $existing = StatusAlat::where('device_id', $validated['device_id'])->first();
+
+        $statusMotor = $validated['status_motor'];
+        $modeOperasi = $validated['mode_operasi'];
+
+        if ($existing) {
+            // Jika mode operasi yang dikirim oleh ESP32 adalah 'otomatis',
+            // maka target motor status dan mode operasi dari database harus dipertahankan.
+            // Ini untuk menghindari race condition di mana telemetry menimpa perintah manual/jadwal sebelum sinkronisasi.
+            if ($validated['mode_operasi'] === 'otomatis') {
+                $statusMotor = $existing->status_motor;
+                $modeOperasi = $existing->mode_operasi ?? 'otomatis';
+            }
+        }
+
         $status = StatusAlat::updateOrCreate(
             ['device_id' => $validated['device_id']],
             [
                 'nama_perangkat' => $validated['nama_perangkat'],
                 'berat_pakan' => $validated['berat_pakan'],
-                'status_motor' => $validated['status_motor'],
+                'status_motor' => $statusMotor,
                 'status_sensor' => $validated['status_sensor'],
-                'mode_operasi' => $validated['mode_operasi'],
+                'mode_operasi' => $modeOperasi,
                 'status_koneksi' => 'online',
                 'terakhir_online' => now(),
             ]
@@ -184,6 +200,7 @@ class StatusAlatController extends Controller
                     } else {
                         $statusAlat->update([
                             'status_motor' => 'aktif',
+                            'mode_operasi' => 'otomatis',
                             'terakhir_online' => now()
                         ]);
                     }
@@ -246,6 +263,7 @@ class StatusAlatController extends Controller
                         // Durasi sudah terpenuhi, matikan motor
                         $statusAlat->update([
                             'status_motor' => 'mati',
+                            'mode_operasi' => 'otomatis',
                             'terakhir_online' => now()
                         ]);
 
