@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::redirect('/', '/dashboard')->name('home');
 
 // Dashboard routes - protected by authentication and verified email middleware
 Route::middleware(['auth', 'verified'])->group(function () {
