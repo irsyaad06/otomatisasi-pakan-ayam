@@ -141,4 +141,14 @@ class StatusAlatController extends Controller
             'data' => null
         ]);
     }
+
+    public function getMotorStatus(): JsonResponse
+    {
+        $statusAlat = StatusAlat::latest()->first();
+
+        return response()->json([
+            'status' => true,
+            'motor' => $statusAlat ? ($statusAlat->status_motor ?? 'mati') : 'mati'
+        ]);
+    }
 }

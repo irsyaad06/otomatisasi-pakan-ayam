@@ -41,6 +41,7 @@ Route::delete('/log-pemberian-pakan/{id}', [LogPemberianPakanController::class, 
 
 // 5. Status Alat CRUD (Resourceful)
 Route::get('/status-alat', [StatusAlatController::class, 'index']);
+Route::get('/status-alat/motor', [StatusAlatController::class, 'getMotorStatus']);
 Route::post('/status-alat', [StatusAlatController::class, 'store']);
 Route::get('/status-alat/{id}', [StatusAlatController::class, 'show']);
 Route::put('/status-alat/{id}', [StatusAlatController::class, 'update']);
