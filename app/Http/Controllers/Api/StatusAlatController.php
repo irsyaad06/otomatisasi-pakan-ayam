@@ -144,7 +144,126 @@ class StatusAlatController extends Controller
 
     public function getMotorStatus(): JsonResponse
     {
+        // 1. Ambil data status_alat terbaru
         $statusAlat = StatusAlat::latest()->first();
+
+        // 2. Cek apakah ada jadwal pakan yang harus aktif sekarang
+        $activePeriode = \App\Models\PeriodePemeliharaan::where('status', 'aktif')
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if ($activePeriode) {
+            $now = \Carbon\Carbon::now('Asia/Jakarta');
+            $currentTime = $now->toTimeString(); // "HH:MM:SS"
+
+            // Ambil jadwal pakan aktif hari ini yang waktunya sudah terlewat
+            $schedules = \App\Models\JadwalPakan::where('periode_pemeliharaan_id', $activePeriode->id)
+                ->where('status_aktif', true)
+                ->where('waktu_pakan', '<=', $currentTime)
+                ->orderBy('waktu_pakan', 'desc')
+                ->get();
+
+            foreach ($schedules as $schedule) {
+                // Cek apakah jadwal ini sudah dieksekusi hari ini
+                $executed = \App\Models\LogPemberianPakan::where('jadwal_pakan_id', $schedule->id)
+                    ->whereDate('waktu_mulai', \Carbon\Carbon::today('Asia/Jakarta'))
+                    ->exists();
+
+                if (!$executed) {
+                    // Jika belum pernah dieksekusi hari ini, aktifkan motor!
+                    if (!$statusAlat) {
+                        $statusAlat = StatusAlat::create([
+                            'device_id' => 'FEEDER-01',
+                            'nama_perangkat' => 'ESP32-FeederKandang',
+                            'status_koneksi' => 'online',
+                            'status_motor' => 'aktif',
+                            'status_sensor' => 'normal',
+                            'mode_operasi' => 'otomatis',
+                            'terakhir_online' => now(),
+                        ]);
+                    } else {
+                        $statusAlat->update([
+                            'status_motor' => 'aktif',
+                            'terakhir_online' => now()
+                        ]);
+                    }
+
+                    // Tentukan durasi motor aktif (default 10 detik)
+                    $durasi = $schedule->durasi_motor_detik ?? 10;
+                    $targetPakan = $schedule->target_pakan_gram ?? 500;
+
+                    // Buat log pemberian pakan dengan status 'proses'
+                    \App\Models\LogPemberianPakan::create([
+                        'jadwal_pakan_id' => $schedule->id,
+                        'sumber' => 'otomatis',
+                        'waktu_mulai' => now(),
+                        'waktu_selesai' => now()->addSeconds($durasi),
+                        'durasi_motor_detik' => $durasi,
+                        'jumlah_pakan_keluar_gram' => $targetPakan,
+                        'status' => 'proses',
+                        'keterangan' => 'Pemberian pakan otomatis berdasarkan jadwal sedang berlangsung.'
+                    ]);
+
+                    // Kurangi stok pakan sesuai target
+                    $stok = \App\Models\StokPakan::orderBy('waktu_pembacaan', 'desc')->first();
+                    if ($stok) {
+                        $newBerat = max(0, $stok->berat_pakan_gram - $targetPakan);
+                        $newPersentase = min(100, max(0, (int) round(($newBerat / 50000) * 100)));
+                        $statusStok = 'aman';
+                        if ($newPersentase < 20 && $newPersentase > 0) {
+                            $statusStok = 'hampir_habis';
+                        } elseif ($newPersentase <= 0) {
+                            $statusStok = 'habis';
+                        }
+
+                        \App\Models\StokPakan::create([
+                            'berat_pakan_gram' => $newBerat,
+                            'persentase_stok' => $newPersentase,
+                            'status_stok' => $statusStok,
+                            'waktu_pembacaan' => now(),
+                        ]);
+                    }
+
+                    return response()->json([
+                        'status' => true,
+                        'motor' => 'aktif'
+                    ]);
+                }
+            }
+
+            // Jika status motor saat ini sedang 'aktif', periksa apakah durasi pengumpanan otomatis sudah selesai
+            if ($statusAlat && $statusAlat->status_motor === 'aktif') {
+                $latestLog = \App\Models\LogPemberianPakan::where('sumber', 'otomatis')
+                    ->where('status', 'proses')
+                    ->orderBy('waktu_mulai', 'desc')
+                    ->first();
+
+                if ($latestLog) {
+                    $waktuMulai = \Carbon\Carbon::parse($latestLog->waktu_mulai);
+                    $durasi = $latestLog->durasi_motor_detik ?? 10;
+
+                    if (abs(now()->diffInSeconds($waktuMulai)) >= $durasi) {
+                        // Durasi sudah terpenuhi, matikan motor
+                        $statusAlat->update([
+                            'status_motor' => 'mati',
+                            'terakhir_online' => now()
+                        ]);
+
+                        // Update status log menjadi 'berhasil'
+                        $latestLog->update([
+                            'status' => 'berhasil',
+                            'waktu_selesai' => now(),
+                            'keterangan' => 'Pemberian pakan otomatis selesai setelah durasi terpenuhi.'
+                        ]);
+
+                        return response()->json([
+                            'status' => true,
+                            'motor' => 'mati'
+                        ]);
+                    }
+                }
+            }
+        }
 
         return response()->json([
             'status' => true,

@@ -422,6 +422,33 @@ const triggerAutoCutDirect = async () => {
     }
 };
 
+// Toggle physical motor status manually on the backend
+const togglePhysicalMotor = async () => {
+    if (!simStatus.value?.status_alat) {
+        toast.error('Data perangkat tidak ditemukan.');
+        return;
+    }
+    const currentStatus = simStatus.value.status_alat.status_motor;
+    const newStatus = currentStatus === 'aktif' ? 'mati' : 'aktif';
+    apiLoading.value = true;
+    try {
+        const response = await api.put(`/status-alat/${simStatus.value.status_alat.id}`, {
+            status_motor: newStatus
+        });
+        if (response.data?.status) {
+            toast.success(`Motor berhasil diubah menjadi ${newStatus}!`);
+            await fetchSimStatus();
+            await store.fetchDashboard();
+        } else {
+            toast.error('Gagal memperbarui status motor.');
+        }
+    } catch (err: any) {
+        toast.error(err.response?.data?.message || 'Terjadi kesalahan saat menghubungi server.');
+    } finally {
+        apiLoading.value = false;
+    }
+};
+
 // Event classes helper for color coding
 const getPeristiwaClass = (p: string) => {
     const lower = p.toLowerCase();
@@ -778,6 +805,17 @@ onUnmounted(() => {
                         >
                             <RotateCcw class="h-4 w-4" />
                             Reset
+                        </button>
+
+                        <button 
+                            @click="togglePhysicalMotor" 
+                            :disabled="apiLoading"
+                            :class="simStatus?.status_alat?.status_motor === 'aktif' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'"
+                            class="flex items-center justify-center gap-2 rounded-xl text-white font-semibold py-2.5 px-4 text-xs transition col-span-2 shadow-xs"
+                        >
+                            <Cpu class="h-4 w-4 animate-pulse" v-if="simStatus?.status_alat?.status_motor === 'aktif'" />
+                            <Cpu class="h-4 w-4" v-else />
+                            {{ simStatus?.status_alat?.status_motor === 'aktif' ? 'Matikan Motor IoT (Manual)' : 'Aktifkan Motor IoT (Manual)' }}
                         </button>
                     </div>
 

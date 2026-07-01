@@ -494,6 +494,19 @@ const handleToggleJadwal = async (item: any) => {
   }
 };
 
+// Toggle motor status manually
+const toggleMotorStatus = async (item: any) => {
+  const newStatus = item.status_motor === 'aktif' ? 'mati' : 'aktif';
+  try {
+    await store.updateStatus(item.id, { 
+      status_motor: newStatus 
+    });
+    toast.success(`Motor berhasil diubah menjadi ${newStatus}!`);
+  } catch (err) {
+    toast.error('Gagal memperbarui status motor.');
+  }
+};
+
 // --- DETAIL MODAL OVERLAYS ---
 const openDetail = async (type: 'jadwal' | 'status', item: any) => {
   detailType.value = type;
@@ -1357,7 +1370,16 @@ import api from '../services/api';
           <StatusBadge :status="item.status_koneksi" />
         </template>
         <template #status_motor="{ item }">
-          <StatusBadge :status="item.status_motor" />
+          <div class="flex items-center gap-2">
+            <StatusBadge :status="item.status_motor" />
+            <button 
+              @click="toggleMotorStatus(item)" 
+              :class="item.status_motor === 'aktif' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'" 
+              class="px-2 py-0.5 text-[10px] font-bold text-white rounded transition-colors shadow-sm"
+            >
+              {{ item.status_motor === 'aktif' ? 'Matikan' : 'Aktifkan' }}
+            </button>
+          </div>
         </template>
         <template #status_sensor="{ item }">
           <StatusBadge :status="item.status_sensor" />
