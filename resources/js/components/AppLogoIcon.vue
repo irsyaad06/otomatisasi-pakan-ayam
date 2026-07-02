@@ -15,15 +15,43 @@ defineProps<Props>();
 <template>
     <svg
         xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 40 42"
+        viewBox="0 0 512 512"
         :class="className"
         v-bind="$attrs"
     >
-        <path
-            fill="currentColor"
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M17.2 5.633 8.6.855 0 5.633v26.51l16.2 9 16.2-9v-8.442l7.6-4.223V9.856l-8.6-4.777-8.6 4.777V18.3l-5.6 3.111V5.633ZM38 18.301l-5.6 3.11v-6.157l5.6-3.11V18.3Zm-1.06-7.856-5.54 3.078-5.54-3.079 5.54-3.078 5.54 3.079ZM24.8 18.3v-6.157l5.6 3.111v6.158L24.8 18.3Zm-1 1.732 5.54 3.078-13.14 7.302-5.54-3.078 13.14-7.3v-.002Zm-16.2 7.89 7.6 4.222V38.3L2 30.966V7.92l5.6 3.111v16.892ZM8.6 9.3 3.06 6.222 8.6 3.143l5.54 3.08L8.6 9.3Zm21.8 15.51-13.2 7.334V38.3l13.2-7.334v-6.156ZM9.6 11.034l5.6-3.11v14.6l-5.6 3.11v-14.6Z"
-        />
+        <defs>
+            <!-- Background Gradient -->
+            <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FF9F43" />
+                <stop offset="100%" stop-color="#FF5252" />
+            </linearGradient>
+            <!-- Shadow Effect -->
+            <filter id="logo-shadow" x="-10%" y="-10%" width="120%" height="120%">
+                <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000000" flood-opacity="0.15"/>
+            </filter>
+        </defs>
+        
+        <!-- Outer circle with modern gradient -->
+        <circle cx="256" cy="256" r="240" fill="url(#logo-grad)" />
+        
+        <!-- Minimalist Chicken Head -->
+        <g filter="url(#logo-shadow)">
+            <!-- Red Comb (Crest) -->
+            <path d="M 230 110 C 210 110 195 130 205 150 C 220 145 235 155 230 170 C 250 155 275 160 270 185 C 290 170 315 180 310 205 C 330 195 345 210 340 230 C 335 240 310 250 290 240 C 290 200 250 160 230 110 Z" fill="#E84118" />
+            
+            <!-- White Body / Neck -->
+            <path d="M 180 380 C 180 280 240 230 290 230 C 340 230 350 280 350 380 C 350 390 330 400 265 400 C 200 400 180 390 180 380 Z" fill="#FFFFFF" />
+            
+            <!-- Red Wattles -->
+            <path d="M 315 285 C 315 315 335 315 335 285 C 335 275 315 275 315 285 Z" fill="#FF5252" />
+            <path d="M 328 290 C 328 320 345 320 345 290 C 345 280 328 280 328 290 Z" fill="#E84118" />
+
+            <!-- Yellow Beak -->
+            <path d="M 310 250 L 365 268 L 320 285 Z" fill="#FEC20C" />
+            
+            <!-- Eye -->
+            <circle cx="270" cy="245" r="14" fill="#2F3640" />
+            <circle cx="274" cy="241" r="5" fill="#FFFFFF" />
+        </g>
     </svg>
 </template>
