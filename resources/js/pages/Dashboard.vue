@@ -341,11 +341,9 @@ const stokColumns = [
 const statusColumns = [
   { key: 'nama_perangkat', label: 'Nama Perangkat' },
   { key: 'status_koneksi', label: 'Koneksi WiFi' },
-  { key: 'status_motor', label: 'Motor' },
   { key: 'status_sensor', label: 'Sensor' },
-  { key: 'mode_operasi', label: 'Mode' },
-  { key: 'terakhir_online', label: 'Terakhir Online' },
-  { key: 'aksi', label: 'Aksi', class: 'text-right' }
+  { key: 'status_motor_gabungan', label: 'Motor' },
+  { key: 'terakhir_online', label: 'Terakhir Online' }
 ];
 
 // --- HELPERS ---
@@ -498,14 +496,30 @@ const handleToggleJadwal = async (item: any) => {
 const toggleMotorStatus = async (item: any) => {
   const newStatus = item.status_motor === 'aktif' ? 'mati' : 'aktif';
   try {
-    await store.updateStatus(item.id, { 
+    const response = await api.put(`/status-alat/${item.id}`, {
       status_motor: newStatus,
-      mode_operasi: 'manual'
     });
-    toast.success(`Motor berhasil diubah menjadi ${newStatus}!`);
+    if (response.data?.status) {
+      toast.success(`Motor berhasil diubah menjadi ${newStatus}!`);
+      fetchDashboard();
+    } else {
+      toast.error('Gagal memperbarui status motor.');
+    }
   } catch (err) {
-    toast.error('Gagal memperbarui status motor.');
+    toast.error('Gagal menghubungi server.');
   }
+};
+
+const toggleGlobalMotor = async () => {
+    if (!confirm('Apakah anda yakin akan menyalakan conveyor secara manual?')) {
+        return;
+    }
+    const item = store.dashboard.status_alat || (paginatedStatus.value.length > 0 ? paginatedStatus.value[0] : null);
+    if (!item) {
+        toast.error('Perangkat IoT tidak ditemukan.');
+        return;
+    }
+    await toggleMotorStatus(item);
 };
 
 // --- DETAIL MODAL OVERLAYS ---
@@ -613,7 +627,7 @@ import api from '../services/api';
       />
     </div>
 
-    <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div v-else-if="currentTab !== 'status'" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Persentase Stok Silo"
         :value="store.dashboard.stok_pakan_terbaru ? `${store.dashboard.stok_pakan_terbaru.persentase_stok}%` : '0%'"
@@ -628,7 +642,7 @@ import api from '../services/api';
       />
 
       <StatCard
-        title="Koneksi Telemetri"
+        title="Koneksi Alat"
         :value="store.dashboard.status_alat?.status_koneksi === 'online' ? 'Terhubung' : 'Terputus'"
         :subtitle="store.dashboard.status_alat ? `Motor: ${store.dashboard.status_alat.status_motor} | Sensor: ${store.dashboard.status_alat.status_sensor}` : 'Tidak ada telemetri'"
         :icon="Cpu"
@@ -882,7 +896,7 @@ import api from '../services/api';
       <!-- Card Peramalan Stok Pakan -->
       <div class="grid gap-6 md:grid-cols-3">
         <!-- Panel Utama Peramalan -->
-        <div class="md:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-950 flex flex-col justify-between">
+        <div v-if="false" class="md:col-span-2 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-950 flex flex-col justify-between">
           <div>
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-sm font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
@@ -1061,7 +1075,7 @@ import api from '../services/api';
                 <th class="py-2.5 px-3">Tanggal / Hari</th>
                 <th class="py-2.5 px-3">Umur Ayam</th>
                 <th class="py-2.5 px-3">Fase</th>
-                <th class="py-2.5 px-3 text-right">Kebutuhan Harian (Flock)</th>
+                <th class="py-2.5 px-3 text-right">Kebutuhan Harian</th>
                 <th class="py-2.5 px-3 text-right">Sisa Stok Akhir Hari</th>
                 <th class="py-2.5 px-3 text-center">Status</th>
               </tr>
@@ -1291,10 +1305,10 @@ import api from '../services/api';
             />
           </div>
           <!-- Create button -->
-          <button @click="openCreateModal('log')" class="flex items-center gap-1 rounded-xl bg-indigo-650 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-all">
+          <!-- <button @click="openCreateModal('log')" class="flex items-center gap-1 rounded-xl bg-indigo-650 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-all">
             <Plus class="h-3.5 w-3.5" />
             Tambah Log
-          </button>
+          </button> -->
         </div>
       </div>
 
@@ -1343,24 +1357,18 @@ import api from '../services/api';
     <div v-else-if="currentTab === 'status'" class="space-y-4">
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 class="text-lg font-bold text-slate-850 dark:text-slate-100">Diagnosis & Hubungan Perangkat IoT</h2>
-        
-        <div class="flex items-center gap-2.5">
-          <!-- Search box -->
-          <div class="relative w-48 sm:w-64">
-            <Search class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <input 
-              type="text" 
-              v-model="queryStatus" 
-              placeholder="Cari perangkat..." 
-              class="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-4 py-2 text-xs dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200" 
-            />
-          </div>
-          <!-- Create button -->
-          <button @click="openCreateModal('status')" class="flex items-center gap-1 rounded-xl bg-indigo-650 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-all">
-            <Plus class="h-3.5 w-3.5" />
-            Registrasi Alat
+      </div>
+
+      <!-- Card untuk tombol menyalakan motor -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-950 max-w-md mt-4 flex flex-col items-center justify-center space-y-4">
+          <h3 class="font-bold text-slate-800 dark:text-slate-200 text-center">Kontrol Manual Motor Conveyor</h3>
+          <p class="text-xs text-slate-500 text-center -mt-2">Gunakan tombol di bawah untuk memicu perputaran motor secara manual pada perangkat IoT.</p>
+          <button 
+            @click="toggleGlobalMotor" 
+            class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-all cursor-pointer w-full mt-2"
+          >
+            Nyalakan Motor Conveyor
           </button>
-        </div>
       </div>
 
       <DataTable :columns="statusColumns" :items="paginatedStatus" :loading="store.loading">
@@ -1370,39 +1378,21 @@ import api from '../services/api';
         <template #status_koneksi="{ item }">
           <StatusBadge :status="item.status_koneksi" />
         </template>
-        <template #status_motor="{ item }">
-          <div class="flex items-center gap-2">
-            <StatusBadge :status="item.status_motor" />
-            <button 
-              @click="toggleMotorStatus(item)" 
-              :class="item.status_motor === 'aktif' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-emerald-500 hover:bg-emerald-600'" 
-              class="px-2 py-0.5 text-[10px] font-bold text-white rounded transition-colors shadow-sm"
-            >
-              {{ item.status_motor === 'aktif' ? 'Matikan' : 'Aktifkan' }}
-            </button>
-          </div>
-        </template>
         <template #status_sensor="{ item }">
           <StatusBadge :status="item.status_sensor" />
         </template>
-        <template #mode_operasi="{ item }">
-          <span class="capitalize text-xs">{{ item.mode_operasi }}</span>
+        <template #status_motor_gabungan="{ item }">
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-xs capitalize" :class="item.status_motor === 'aktif' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-600 dark:text-slate-400'">
+              {{ item.status_motor }}
+            </span>
+            <span class="text-[10px] text-slate-500 capitalize">
+              ({{ item.mode_operasi }})
+            </span>
+          </div>
         </template>
         <template #terakhir_online="{ item }">
           <span class="text-xs">{{ formatDate(item.terakhir_online) }}</span>
-        </template>
-        <template #aksi="{ item }">
-          <div class="flex justify-end gap-1.5">
-            <button @click="openDetail('status', item)" class="rounded-lg p-1 border border-slate-250 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900 text-slate-650 dark:text-slate-350">
-              <Eye class="h-3.5 w-3.5" />
-            </button>
-            <button @click="openEditModal('status', item)" class="rounded-lg p-1 border border-slate-250 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900 text-slate-600 dark:text-slate-400">
-              <Edit2 class="h-3.5 w-3.5" />
-            </button>
-            <button @click="handleDeleteItem('status', item.id)" class="rounded-lg p-1 border border-rose-250 hover:bg-rose-50 dark:border-rose-955/20 dark:hover:bg-rose-955/10 text-rose-600 dark:text-rose-455">
-              <Trash2 class="h-3.5 w-3.5" />
-            </button>
-          </div>
         </template>
       </DataTable>
 

@@ -26,11 +26,15 @@ createInertiaApp({
         }
     },
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
+        const vueApp = createApp({ render: () => h(App, props) })
             .use(plugin)
-            .use(createPinia())
-            .use(Vue3ApexCharts)
-            .mount(el);
+            .use(createPinia());
+            
+        if (typeof window !== 'undefined') {
+            vueApp.use(Vue3ApexCharts);
+        }
+        
+        vueApp.mount(el);
     },
     progress: {
         color: '#4B5563',
@@ -38,7 +42,11 @@ createInertiaApp({
 });
 
 // This will set light / dark mode on page load...
-initializeTheme();
+if (typeof window !== 'undefined') {
+    initializeTheme();
+}
 
 // This will listen for flash toast data from the server...
-initializeFlashToast();
+if (typeof window !== 'undefined') {
+    initializeFlashToast();
+}

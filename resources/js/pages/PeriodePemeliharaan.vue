@@ -357,13 +357,13 @@ onMounted(() => {
                         </p>
                         <p>
                             <strong>Aturan Sistem:</strong>
-                            <ul class="list-disc pl-4 space-y-1.5 mt-1">
-                                <li>Hanya diperbolehkan ada <strong>satu periode aktif</strong> dalam satu waktu.</li>
-                                <li>Memulai periode baru secara otomatis akan memicu penutupan periode lama.</li>
-                                <li>Tanggal mulai digunakan untuk melacak umur ayam yang mempengaruhi target takaran pakan harian dinamis (Starter/Grower/Finisher).</li>
-                                <li>Tanggal selesai bersifat opsional untuk target perencanaan estimasi masa panen ayam.</li>
-                            </ul>
                         </p>
+                        <ul class="list-disc pl-4 space-y-1.5 mt-1">
+                            <li>Hanya diperbolehkan ada <strong>satu periode aktif</strong> dalam satu waktu.</li>
+                            <li>Memulai periode baru secara otomatis akan memicu penutupan periode lama.</li>
+                            <li>Tanggal mulai digunakan untuk melacak umur ayam yang mempengaruhi target takaran pakan harian dinamis (Starter/Grower/Finisher).</li>
+                            <li>Tanggal selesai bersifat opsional untuk target perencanaan estimasi masa panen ayam.</li>
+                        </ul>
                     </div>
                 </div>
                 <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2 text-3xs text-slate-400">

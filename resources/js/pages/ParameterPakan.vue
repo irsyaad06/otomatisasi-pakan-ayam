@@ -191,71 +191,8 @@ const deleteItem = async (id: number) => {
     }
 };
 
-// Active Period & Chicken Count Config State
-const activePeriod = ref<any>(null);
-const jumlahAyamInput = ref<number>(100);
-const updatingAyam = ref(false);
-
-// Fetch Active Period Info
-const fetchActivePeriod = async () => {
-    try {
-        const response = await api.get('/simulasi/status');
-        if (response.data?.status && response.data.data?.periode_aktif) {
-            activePeriod.value = response.data.data.periode_aktif;
-            jumlahAyamInput.value = response.data.data.periode_aktif.jumlah_ayam;
-        } else {
-            activePeriod.value = null;
-        }
-    } catch (err) {
-        console.error('Gagal mengambil status periode aktif:', err);
-    }
-};
-
-// Update Chicken Count
-const updateJumlahAyam = async () => {
-    if (jumlahAyamInput.value < 1) {
-        toast.error('Jumlah ayam minimal 1 ekor.');
-        return;
-    }
-    updatingAyam.value = true;
-    try {
-        const response = await api.post('/periode-aktif/update-ayam', {
-            jumlah_ayam: jumlahAyamInput.value
-        });
-        if (response.data?.status) {
-            toast.success('Jumlah ayam berhasil diperbarui!');
-            if (activePeriod.value) {
-                activePeriod.value.jumlah_ayam = response.data.data.jumlah_ayam;
-            }
-        } else {
-            toast.error(response.data?.message || 'Gagal memperbarui jumlah ayam.');
-        }
-    } catch (err: any) {
-        const msg = err.response?.data?.message || 'Gagal memperbarui jumlah ayam.';
-        toast.error(msg);
-    } finally {
-        updatingAyam.value = false;
-    }
-};
-
-// Format Date Helper
-const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    try {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    } catch (e) {
-        return dateStr;
-    }
-};
-
 onMounted(() => {
     fetchKebutuhan();
-    fetchActivePeriod();
 });
 </script>
 
@@ -304,81 +241,6 @@ onMounted(() => {
                 <div>
                     <span class="text-2xs uppercase font-mono text-slate-400 block">Total Fase Terdaftar</span>
                     <span class="text-md font-bold text-slate-800 dark:text-slate-100">{{ kebutuhanList.length }} Fase</span>
-                </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-950 flex items-center gap-4">
-                <div class="p-3 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-xl">
-                    <Scale class="h-5 w-5" />
-                </div>
-                <div>
-                    <span class="text-2xs uppercase font-mono text-slate-400 block">Metode Perhitungan</span>
-                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Tabel Kebutuhan Pakan (IoT Dinamis)</span>
-                </div>
-            </div>
-
-            <div class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-950 flex items-center gap-4">
-                <div class="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl">
-                    <Clock class="h-5 w-5" />
-                </div>
-                <div>
-                    <span class="text-2xs uppercase font-mono text-slate-400 block">Target Sinkronisasi</span>
-                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Terintegrasi dengan Simulasi & IoT</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Active Period / Chicken Count Configuration Card -->
-        <div class="rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 p-5 shadow-xs transition-all duration-200">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <!-- Info Section -->
-                <div class="space-y-1">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <h2 class="text-sm font-bold text-slate-900 dark:text-slate-50">
-                            Konfigurasi Periode Pemeliharaan Aktif
-                        </h2>
-                    </div>
-                    <p class="text-xs text-slate-500 dark:text-slate-400">
-                        Sesuaikan jumlah populasi ayam pada batch aktif untuk menghitung target porsi pakan secara dinamis pada sistem IoT.
-                    </p>
-                    <div v-if="activePeriod" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-650 dark:text-slate-350">
-                        <div>
-                            <span class="text-slate-400 font-mono">BATCH:</span> <span class="font-bold text-slate-800 dark:text-slate-200">{{ activePeriod.nama_periode }}</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400 font-mono">MULAI:</span> <span class="font-bold text-slate-800 dark:text-slate-200">{{ formatDate(activePeriod.tanggal_mulai) }}</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400 font-mono">POPULASI:</span> <span class="font-bold text-indigo-600 dark:text-indigo-400">{{ activePeriod.jumlah_ayam }} ekor</span>
-                        </div>
-                    </div>
-                    <div v-else class="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-medium">
-                        <Info class="h-4 w-4 shrink-0 text-amber-500" />
-                        <span>Tidak ada periode pemeliharaan yang aktif saat ini. Silakan buat periode di Dashboard.</span>
-                    </div>
-                </div>
-
-                <!-- Input Form Section -->
-                <div v-if="activePeriod" class="flex items-center gap-3 w-full md:w-auto self-start md:self-center">
-                    <div class="flex flex-col gap-1 w-full md:w-32">
-                        <label for="jumlah-ayam-active" class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Jumlah Ayam</label>
-                        <input 
-                            id="jumlah-ayam-active"
-                            type="number" 
-                            v-model.number="jumlahAyamInput" 
-                            min="1" 
-                            placeholder="Contoh: 100"
-                            class="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-xs" 
-                        />
-                    </div>
-                    <button 
-                        @click="updateJumlahAyam" 
-                        :disabled="updatingAyam"
-                        class="rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 px-4 text-xs transition disabled:opacity-50 disabled:cursor-not-allowed shadow-xs shrink-0 self-end cursor-pointer"
-                    >
-                        {{ updatingAyam ? 'Menyimpan...' : 'Perbarui' }}
-                    </button>
                 </div>
             </div>
         </div>
